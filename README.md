@@ -1,6 +1,8 @@
-Be aware, this project serves as a way for me to practice proving theorems in Coq.
+I'm studying Finite State Machines (AKA "Finite State Automata"), inspired by a YouTube series by Thomas Kern.
+Here is a link to his playlist on that I'm currently enjoying, which inspired this repo:
+  https://www.youtube.com/watch?v=apKPhtM6od0&list=PL8nlk4F6cN8Ycoxurjdpf8_TvOWVjIffo
 
-This project has a submodule. When first cloned, you may be required to run a "Submodule Update" such as when using the TortoiseGit context menu.
+Be aware, this project serves as a way for me to practice proving theorems in Coq.
 
 In order to view these files with the intended Coq parser, you should install:
 - Visual Studio Code (1.94.2)
