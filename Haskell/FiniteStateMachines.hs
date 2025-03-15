@@ -5,6 +5,7 @@ import Test.QuickCheck
 import Data.List (nub, foldl')
 import qualified Data.Map as Map
 import Data.Map (Map)
+import Data.Maybe
 import Control.Monad
 
 data FSM symbol state = FSM { initState :: state, transition :: symbol -> state -> state, acceptingStates :: [state] }
@@ -13,9 +14,10 @@ runFSM :: Eq state => FSM symbol state -> [symbol] -> Bool
 runFSM fsm input = (`elem` acceptingStates fsm) $ foldr (transition fsm) (initState fsm) input
 
 -- additionFSM
-data Digit = D0 | D1 | D2 | D3 | D4 | D5 | D6 | D7 | D8 | D9 deriving (Eq)
-data IsCarrying = IsCarrying | NotCarrying | Fail deriving (Eq)
+data Digit = D0 | D1 | D2 | D3 | D4 | D5 | D6 | D7 | D8 | D9 deriving (Eq, Show)
+data IsCarrying = IsCarrying | NotCarrying | Fail deriving (Eq, Show)
 
+additionFSM :: FSM (Digit, Digit, Digit) IsCarrying
 additionFSM =
     FSM {
             initState = NotCarrying,
@@ -45,14 +47,14 @@ additionFSM =
                 carryVal NotCarrying = 0
                 carryVal IsCarrying  = 1
 
-toFSMInput :: Integer -> Integer -> Integer -> [(Digit,Digit,Digit)]
-toFSMInput inputNum1 inputNum2 proposedResult = zip3 ds1 ds2 ds3
+toAdditionFSMInput :: Integer -> Integer -> Integer -> [(Digit,Digit,Digit)]
+toAdditionFSMInput inputNum1 inputNum2 proposedResult = zip3 ds1 ds2 ds3
     
-  where (paddedXs, paddedYs, paddedZs) = padToMax '0' (show inputNum1) (show inputNum2) (show proposedResult)
+  where (paddedXs, paddedYs, paddedZs) = padToMax3OnLeft '0' (show inputNum1) (show inputNum2) (show proposedResult)
         
         (ds1, ds2, ds3) = (map charToDigit paddedXs, map charToDigit paddedYs, map charToDigit paddedZs)
 
-padToMax padChar xs ys zs = go ([],[],[]) (reverse xs, reverse ys, reverse zs)
+padToMax3OnLeft padChar xs ys zs = go ([],[],[]) (reverse xs, reverse ys, reverse zs)
           where go (xs', ys', zs') ([], [], [])       = (xs', ys', zs')
                 go (xs', ys', zs') (x:xs, [], [])     = go (x      :xs', padChar:ys', padChar:zs') (xs, [], [])
                 go (xs', ys', zs') ([], y:ys, [])     = go (padChar:xs', y      :ys', padChar:zs') ([], ys, [])
@@ -75,17 +77,17 @@ charToDigit '8' = D8
 charToDigit '9' = D9
 
 
-main :: IO ()
-main = do
+additionFSMExample :: IO ()
+additionFSMExample = do
     
     let inputNum1 = 51125478635350146540600
         inputNum2 = 64586789783213684604684684068
         proposedResult = inputNum1 + inputNum2
         
-        fsmInput = toFSMInput inputNum1 inputNum2 proposedResult
+        fsmInput = toAdditionFSMInput inputNum1 inputNum2 proposedResult
         accept = runFSM additionFSM fsmInput
     
-    print $ padToMax '0' (show inputNum1) (show inputNum2) (show proposedResult)
+    -- print fsmInput
     
     putStrLn "inputNum1"
     print inputNum1
@@ -99,6 +101,68 @@ main = do
     print proposedResult
     putStrLn ""
     
-    print $ if accept
+    putStrLn $ if accept
              then "Accept"
              else "Reject"
+    putStrLn ""
+    
+    putStrLn ""
+
+-- prefixFSM
+
+prefixFSM :: FSM (Maybe Char, Maybe Char) Bool
+prefixFSM =
+    FSM {
+            initState = True,
+            transition = f,
+            acceptingStates = [True]
+        }
+  where f :: (Maybe Char, Maybe Char) -> Bool -> Bool
+        f (c1,c2) False = False
+        f (c1,c2) notYetFailed
+            | c1 == c2 = True
+            | isNothing c1 = True
+            | isNothing c2 = True
+            | otherwise = False
+
+toPrefixFSMInput :: String -> String -> [(Maybe Char, Maybe Char)]
+toPrefixFSMInput input1 input2 = zip paddedXs paddedYs
+    
+  where (paddedXs, paddedYs) = padWithNothingToMax2OnRight input1 input2
+
+padWithNothingToMax2OnRight xs ys = go ([],[]) (xs, ys)
+          where go (xs', ys') ([], [])     = (xs', ys')
+                go (xs', ys') (x:xs, [])   = go (Just x :xs', Nothing:ys') (xs, [])
+                go (xs', ys') ([], y:ys)   = go (Nothing:xs', Just y :ys') ([], ys)
+                go (xs', ys') (x:xs, y:ys) = go (Just x :xs', Just y :ys') (xs, ys)
+
+prefixFSMExample :: IO ()
+prefixFSMExample = do
+    
+    let input1 = "51125478635350146540600"
+        input2 = take 5 input1
+        
+        fsmInput = toPrefixFSMInput input1 input2
+        accept = runFSM prefixFSM fsmInput
+    
+    -- print fsmInput
+    
+    putStrLn "input1"
+    print input1
+    putStrLn ""
+    
+    putStrLn "input2"
+    print input2
+    putStrLn ""
+    
+    putStrLn $ if accept
+             then "Accept"
+             else "Reject"
+    putStrLn ""
+    
+    putStrLn ""
+
+main :: IO ()
+main = do
+    additionFSMExample
+    prefixFSMExample
