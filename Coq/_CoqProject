@@ -1,0 +1,3 @@
+-docroot MyProject
+-R FiniteStateMachines FiniteStateMachines
+FiniteStateMachines/FiniteStateMachines.v
